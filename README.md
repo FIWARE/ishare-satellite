@@ -56,9 +56,12 @@ After placing a configuration file at `config/satellite.yml`, the satellite can 
 bin/run.sh
 ```
 
-A Dockerfile is provided to build a docker image. Using Docker, the satellite can be run with:
+A Dockerfile is provided to build a docker image. Releases automatically create Docker images 
+at [DockerHub](https://hub.docker.com/repository/docker/dwendland/ishare-satellite).
+
+Using Docker, the satellite can be run with:
 ```shell
-docker run --rm -p 8080:8080 -v $PWD/config/satellite.yml:/var/satellite/config/satellite.yml image:tag
+docker run --rm -p 8080:8080 -v $PWD/config/satellite.yml:/var/satellite/config/satellite.yml dwendland/ishare-satellite
 ```
 
 
