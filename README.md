@@ -34,7 +34,7 @@ in the configuration file.
 Further ENVs control the execution of the satellite. Below is a list of the supported ENVs:
 
 | ENV                                    | Default      | Description |
-|:--------------------------------------:|:------------:|:------------|
+|:---------------------------------------|:------------:|:------------|
 | SATELLITE_PORT                         | 8080         | Listen port |
 | SATELLITE_GUNICORN_WORKERS             | 4            | Number of workers that should be created |
 | SATELLITE_MAX_HEADER_SIZE              | 32768        | Maximum header size in bytes |
@@ -46,6 +46,8 @@ Further ENVs control the execution of the satellite. Below is a list of the supp
 | SATELLITE_SUBJECT_ENCODING             | 'UTF-8'      | Encoding of certificate subject names |
 | SATELLITE_X5C_ENCODING                 | 'UTF-8'      | Encoding of x5c certificates in JWTs |
 | SATELLITE_AUTHORIZATION_HEADER         | 'Authorization' | Header name where to expect access_token |
+| SATELLITE_KEY                          |              | Satellite private key provided as ENV (compare to [config/satellite.yml](./config/satellite.yml#L4)) |
+| SATELLITE_CERTS                        |              | Satellite certificate chain provided as ENV (compare to [config/satellite.yml](./config/satellite.yml#L10)) |
 
 
 
