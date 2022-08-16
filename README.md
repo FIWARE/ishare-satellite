@@ -83,5 +83,7 @@ Tests can be run with `pytest` via
 pytest
 ```
 
-
-
+or using the created Docker image with
+```shell
+docker run --rm -it dwendland/ishare-satellite pytest
+```
