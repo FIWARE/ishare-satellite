@@ -10,7 +10,7 @@ on:
       - unlabeled
 
 env:
-  IMAGE_NAME: dwendland/ishare-satellite
+  IMAGE_NAME: fiware/ishare-satellite
 
 
 jobs:

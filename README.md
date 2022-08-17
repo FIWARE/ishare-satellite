@@ -64,11 +64,11 @@ bin/run.sh
 ```
 
 A Dockerfile is provided to build a docker image. Releases automatically create Docker images 
-at [DockerHub](https://hub.docker.com/repository/docker/dwendland/ishare-satellite).
+at [DockerHub](https://hub.docker.com/repository/docker/fiware/ishare-satellite).
 
 Using Docker, the satellite can be run with:
 ```shell
-docker run --rm -p 8080:8080 -v $PWD/config/satellite.yml:/var/satellite/config/satellite.yml dwendland/ishare-satellite
+docker run --rm -p 8080:8080 -v $PWD/config/satellite.yml:/var/satellite/config/satellite.yml fiware/ishare-satellite
 ```
 
 
@@ -90,5 +90,5 @@ pytest
 
 or using the created Docker image with
 ```shell
-docker run --rm -it dwendland/ishare-satellite pytest
+docker run --rm -it fiware/ishare-satellite pytest
 ```
