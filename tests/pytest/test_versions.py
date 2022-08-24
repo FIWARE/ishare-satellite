@@ -1,7 +1,7 @@
 import pytest
 from api import app
 from tests.pytest.util.config_handler import load_config
-from tests.pytest.util.token_handler import decode_token, get_access_token, encode_token
+from tests.pytest.util.token_handler import decode_token, decode_header, verify_token, get_access_token, encode_token
 import time
 
 # Get satellite config
@@ -40,8 +40,16 @@ def test_versions_ok(client):
     # Versions token exists
     assert 'versions_token' in response.json
 
-    # Decode token
-    versions_token = decode_token(response.json['versions_token'])
+    # Get header
+    token_header = decode_header(response.json['versions_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in token_header
+    versions_token = {}
+    try:
+        versions_token = verify_token(response.json['versions_token'], token_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned versions token --> Exception {}: {}'.format(type(ex).__name__, ex))
 
     # versions token parameters
     assert versions_token['aud'] == client_config['id']

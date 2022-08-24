@@ -2,7 +2,7 @@ from api.util.token_handler import get_subject_components
 import os
 
 # Maximum of parties per page
-MAX_PER_PAGE = os.environ.get('SATELLITE_MAX_PARTIES_PER_PAGE', 10)
+MAX_PER_PAGE = int(os.environ.get('SATELLITE_MAX_PARTIES_PER_PAGE', 10))
 
 # Request must contain at leat one of these parameters
 MINIMUM_PARAMETERS = ['name', 'eori', 'certified_only', 'active_only', 'certificate_subject_name']
@@ -19,8 +19,8 @@ def to_bool(value):
     return None
 
 # Check for parameter requirements (returns None if params ok)
-def check_invalid_parameters(request): 
-    
+def check_invalid_parameters(request):
+
     # Check for minimum parameters
     ok = False
     for p in MINIMUM_PARAMETERS:
@@ -66,6 +66,8 @@ def check_invalid_parameters(request):
 
 # Check certificate_subject_name of party certificate
 def check_certificate_subject_name(certificate_subject_name, request_eori, party, app):
+
+    app.logger.debug("Compare requested certificate subject name for {}".format(party['id']))
     
     # Get subject_name components from party certificate
     crt = party['crt']
@@ -75,26 +77,32 @@ def check_certificate_subject_name(certificate_subject_name, request_eori, party
     r_subject_components = []
     r_sub_array = certificate_subject_name.split(',')
     for s in r_sub_array:
-        comp = s.split('=')
+        comp = s.strip().split('=')
         r_subject_components.append(comp)
 
+    app.logger.debug("==> Requested: {}".format(r_subject_components))
+    app.logger.debug("==> Certificate: {}".format(crt_subject_components))
+        
     # Iterate over requested subject name attributes
     for r in r_subject_components:
         found = False
         for c in crt_subject_components:
             # If serialNumber, compare to EORI
-            if (c[0] == 'serialNumber') and (request_eori != c[1]):
+            if (c[0].strip() == 'serialNumber') and (request_eori != c[1].strip()):
+                app.logger.debug("Wrong serialNumber in certificate subject name")
                 return False
 
             # Compare attributes
-            if r[0] == c[0] and r[1] == c[1]:
+            if r[0].strip() == c[0].strip() and r[1].strip() == c[1].strip():
                 found = True
                 break
 
         # Attribute not found
         if not found:
+            app.logger.debug("Certificate subject name does not match")
             return False
-            
+
+    app.logger.debug("Subject certificate name matched")
     return True
 
 # Paginate parties_info
@@ -111,7 +119,7 @@ def paginate_parties(parties_info, page):
     page = int(page)
     start = (page-1)*MAX_PER_PAGE
     end = page * MAX_PER_PAGE
-    data = parties_info['data'][start:end]
+    data = parties_info['data'][int(start):int(end)]
 
     # Replace and return
     parties_info['data'] = data
@@ -132,6 +140,8 @@ def get_parties_info(request, config, app):
         return parties_info
     for p in config['parties']:
 
+        app.logger.debug("Compare request to participant: {}".format(p['id']))
+
         # Check for name
         r_name = request.args.get('name')
         if (r_name is not None) and (r_name != "*") and (r_name != p['name']):
@@ -145,6 +155,7 @@ def get_parties_info(request, config, app):
         # Check for certifications
         r_certified = to_bool(request.args.get('certified_only'))
         if r_certified is not None:
+            app.logger.debug("Check for requested participant certification")
             if (r_certified == True) and ('certifications' not in p):
                 continue
             elif (r_certified == False) and ('certifications' in p):
@@ -153,6 +164,7 @@ def get_parties_info(request, config, app):
         # Check for status
         r_active = to_bool(request.args.get('active_only'))
         if r_active is not None:
+            app.logger.debug("Check for requested participant status")
             if (r_active == True) and (p['status'] != "Active"):
                 continue
             elif (r_active == False) and (p['status'] == "Active"):
@@ -165,6 +177,7 @@ def get_parties_info(request, config, app):
                 continue
 
         # Append data
+        app.logger.debug("Participant '{}' passed, adding to result list".format(p['id']))
         parties_info['count'] += 1
         party = {
             'party_id': p['id'],
@@ -180,6 +193,6 @@ def get_parties_info(request, config, app):
         if 'capability_url' in p:
             party['capability_url'] = p['capability_url']
         parties_info['data'].append(party)
-
+        
     # Return data
     return parties_info

@@ -1,7 +1,7 @@
 import pytest
 from api import app
 from tests.pytest.util.config_handler import load_config
-from tests.pytest.util.token_handler import create_request_token, decode_token
+from tests.pytest.util.token_handler import create_request_token, decode_header, verify_token
 import time
 
 # Get satellite config
@@ -50,8 +50,16 @@ def test_token_ok(client):
     # Access token exists
     assert 'access_token' in response.json
 
-    # Decode token
-    access_token = decode_token(response.json['access_token'])
+    # Get header
+    token_header = decode_header(response.json['access_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in token_header
+    access_token = {}
+    try:
+        access_token = verify_token(response.json['access_token'], token_header['x5c'][0], alg="RS256", aud=satellite_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned access token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Access token parameters
     assert access_token['client_id'] == client_config['id']

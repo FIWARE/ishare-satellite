@@ -2,6 +2,7 @@ import jwt
 import os
 import time
 import uuid
+from cryptography.x509 import load_pem_x509_certificate
 
 # /token endpoint
 TOKEN_ENDPOINT = "/token"
@@ -43,6 +44,17 @@ def create_request_token(client_id, satellite_id, key, crt):
 # Decode iSHARE JWT
 def decode_token(token):
     return jwt.decode(token, options={"verify_signature": False})
+
+# Decode header of iSHARE JWT without verification
+def decode_header(token):
+    return jwt.get_unverified_header(token)
+
+# Verify signature of iSHARE JWT and return decoded payload
+def verify_token(token, x5c, alg="RS256", aud=None):
+    cert_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(x5c)
+    cert_obj = load_pem_x509_certificate(cert_pem.encode('UTF-8'))
+    public_key = cert_obj.public_key()
+    return jwt.decode(token, public_key, algorithms=alg, audience=aud)
 
 # Encode token
 def encode_token(token, key, x5c=None):

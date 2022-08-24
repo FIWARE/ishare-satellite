@@ -50,6 +50,18 @@ def get_authorization_header(request):
 def load_certificate(cert):
     return crypto.load_certificate(crypto.FILETYPE_PEM, cert)
 
+# Retrieves x5c cert chain array from config string
+def get_x5c_chain(cert):
+    sp = cert.split('-----BEGIN CERTIFICATE-----\n')
+    sp = sp[1:]
+    
+    ca_chain = []
+    for ca in sp:
+        ca_sp = ca.split('\n-----END CERTIFICATE-----')
+        ca_chain.append(ca_sp[0].replace('\n',''))
+        
+    return ca_chain
+
 # Get subject components
 def get_subject_components(cert):
     cr = load_certificate(cert)
@@ -77,6 +89,8 @@ def validate_jwt(token, config, app, required_issuer=None):
         # Decode JWT w/o verification to extract headers first
         decoded_payload = jwt.decode(token, options={"verify_signature": False})
         decoded_header = jwt.get_unverified_header(token)
+        app.logger.debug('--> Decoded JWT payload: {}'.format(decoded_payload))
+        app.logger.debug('--> Decoded JWT header: {}'.format(decoded_header))
         
         # Validate timestamp
         now = int(str(time.time()).split('.')[0])
@@ -115,7 +129,7 @@ def validate_jwt(token, config, app, required_issuer=None):
             return False
 
         # Get first certificate from x5c header and retrieve subject
-        issuer_cert = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(decoded_header['x5c'][0])
+        issuer_cert = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format("".join(decoded_header['x5c'][0].splitlines()))
         subject_components = get_subject_components(issuer_cert)
         
         # Compare JWT iss against certificate subject serialNumber
@@ -132,7 +146,7 @@ def validate_jwt(token, config, app, required_issuer=None):
             return False
         
         # Verify provided x5c root CA fingerprint against trusted_list
-        root_ca = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(decoded_header['x5c'][len(decoded_header['x5c'])-1])
+        root_ca = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format("".join(decoded_header['x5c'][len(decoded_header['x5c'])-1].splitlines()))
         if not verify_fingerprint(root_ca, config):
             app.logger.debug('Provided x5c root CA not in trusted_list')
             return False
@@ -144,7 +158,7 @@ def validate_jwt(token, config, app, required_issuer=None):
 
         # Verify first intermediate
         if len(decoded_header['x5c']) >= 3:
-            int_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(decoded_header['x5c'][len(decoded_header['x5c'])-2])
+            int_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format("".join(decoded_header['x5c'][len(decoded_header['x5c'])-2].splitlines()))
             int_crt = crypto.load_certificate(crypto.FILETYPE_PEM, int_crt_pem)
             store_ctx = crypto.X509StoreContext(store, int_crt)
             try:
@@ -157,7 +171,7 @@ def validate_jwt(token, config, app, required_issuer=None):
         # Verify further intermediates
         if len(decoded_header['x5c']) >= 3:
             for c_pem in list(reversed(decoded_header['x5c']))[2:len(decoded_header['x5c'])]:
-                int_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(c_pem)
+                int_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format("".join(c_pem.splitlines()))
                 int_crt = crypto.load_certificate(crypto.FILETYPE_PEM, int_crt_pem)
                 store_ctx = crypto.X509StoreContext(store, int_crt)
                 try:
@@ -169,7 +183,7 @@ def validate_jwt(token, config, app, required_issuer=None):
 
         # Verify client certificate
         if len(decoded_header['x5c']) >= 2:
-            client_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(decoded_header['x5c'][0])
+            client_crt_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format("".join(decoded_header['x5c'][0].splitlines()))
             client_crt = crypto.load_certificate(crypto.FILETYPE_PEM, client_crt_pem)
             store_ctx = crypto.X509StoreContext(store, client_crt)
             try:
@@ -179,7 +193,7 @@ def validate_jwt(token, config, app, required_issuer=None):
                 return False
         
         # Verify JWT against client certificate
-        cert_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----\n".format(decoded_header['x5c'][0])
+        cert_pem = "-----BEGIN CERTIFICATE-----\n{}\n-----END CERTIFICATE-----".format("".join(decoded_header['x5c'][0].splitlines()))
         cert_obj = load_pem_x509_certificate(cert_pem.encode(X5C_ENCODING))
         public_key = cert_obj.public_key()
         try:

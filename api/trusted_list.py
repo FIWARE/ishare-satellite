@@ -1,6 +1,6 @@
 from flask import Blueprint, Response, current_app, abort, request
-from api.util.token_handler import validate_jwt, get_authorization_header, get_subject_components, load_certificate
-from api.util.config_handler import get_private_key
+from api.util.token_handler import validate_jwt, get_authorization_header, get_subject_components, load_certificate, get_x5c_chain
+from api.util.config_handler import get_private_key, get_certificates
 import uuid
 import time, os
 import jwt
@@ -100,15 +100,22 @@ def index():
     # Add jti
     result['jti'] = str(uuid.uuid4())
 
+    # Build header
+    header = {
+        'x5c': get_x5c_chain(get_certificates(satellite))
+    }
+
     # Encode JWT
     current_app.logger.debug("Encoding trusted_list_token JWT")
+    current_app.logger.debug("{}".format(result))
     tl_token = ""
     try:
-        tl_token = jwt.encode(result, get_private_key(satellite), algorithm="RS256")
+        tl_token = jwt.encode(result, get_private_key(satellite), algorithm="RS256", headers=header)
     except Exception as ex:
         current_app.logger.debug('Could not encode JWT for trusted_list_token: {}'.format(ex))
         abort(500)
 
+    current_app.logger.debug("==> {}".format(tl_token))
     return {
         'trusted_list_token' : tl_token
     }, 200

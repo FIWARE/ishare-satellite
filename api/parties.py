@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, current_app, abort, request
-from api.util.token_handler import validate_jwt, get_authorization_header
+from api.util.token_handler import validate_jwt, get_authorization_header, get_x5c_chain
 from api.util.parties_handler import check_invalid_parameters, get_parties_info, paginate_parties
-from api.util.config_handler import get_private_key
+from api.util.config_handler import get_private_key, get_certificates
 import uuid
 import time, os
 import jwt
@@ -46,8 +46,10 @@ def index():
     # Paginate
     r_page = request.args.get('page')
     if (r_page is not None):
+        current_app.logger.debug("Paginate --> page: {}".format(r_page))
         parties_info = paginate_parties(parties_info, r_page)
     else:
+        current_app.logger.debug("Paginate --> page: 1")
         parties_info = paginate_parties(parties_info, 1)
 
     # Set parties_info
@@ -66,7 +68,7 @@ def index():
     try:
         decoded_payload = jwt.decode(request_token, options={"verify_signature": False})
     except Exception as ex:
-        current_app.logger.debug('Could not decode JWT: {}'.format(ex))
+        current_app.logger.debug('Could not decode JWT to extract result aud parameter: {}'.format(ex))
         abort(401, description="Could not decode iSHARE JWT Access_token")
     result['aud'] = decoded_payload['client_id']
 
@@ -79,15 +81,22 @@ def index():
     # Add jti
     result['jti'] = str(uuid.uuid4())
 
+    # Build header
+    header = {
+        'x5c': get_x5c_chain(get_certificates(satellite))
+    }
+
     # Encode JWT
     current_app.logger.debug("Encoding parties_token JWT")
+    current_app.logger.debug("{}".format(result))
     p_token = ""
     try:
-        p_token = jwt.encode(result, get_private_key(satellite), algorithm="RS256")
+        p_token = jwt.encode(result, get_private_key(satellite), algorithm="RS256", headers=header)
     except Exception as ex:
         current_app.logger.debug('Could not encode JWT for parties_token: {}'.format(ex))
         abort(500)
 
+    current_app.logger.debug("==> {}".format(p_token))
     return {
         'parties_token' : p_token
     }, 200

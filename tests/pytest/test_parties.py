@@ -1,7 +1,7 @@
 import pytest
 from api import app
 from tests.pytest.util.config_handler import load_config
-from tests.pytest.util.token_handler import decode_token, get_access_token
+from tests.pytest.util.token_handler import decode_token, decode_header, verify_token, get_access_token
 import time
 
 # Get satellite config
@@ -44,8 +44,16 @@ def test_all_parties_eori_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # versions token parameters
     assert parties_token['aud'] == client_config['id']
@@ -86,8 +94,16 @@ def test_all_parties_name_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     assert len(parties_token['parties_info']['data']) == 10
@@ -118,8 +134,16 @@ def test_party_by_eori_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     assert len(parties_token['parties_info']['data']) == 1
@@ -152,8 +176,16 @@ def test_party_by_name_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     assert len(parties_token['parties_info']['data']) == 1
@@ -186,8 +218,16 @@ def test_all_parties_active_only_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
@@ -218,8 +258,16 @@ def test_all_parties_nonactive_only_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
@@ -250,8 +298,16 @@ def test_all_parties_certified_only_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
@@ -282,8 +338,16 @@ def test_all_parties_noncertified_only_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
@@ -315,8 +379,16 @@ def test_party_by_subject_ok(client):
     # Parties token exists
     assert 'parties_token' in response.json
 
-    # Decode token
-    parties_token = decode_token(response.json['parties_token'])
+    # Get header
+    parties_header = decode_header(response.json['parties_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in parties_header
+    parties_token = {}
+    try:
+        parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
     assert len(parties_token['parties_info']['data']) == 1

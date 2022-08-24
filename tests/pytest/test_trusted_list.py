@@ -1,7 +1,7 @@
 import pytest
 from api import app
 from tests.pytest.util.config_handler import load_config
-from tests.pytest.util.token_handler import decode_token, get_access_token
+from tests.pytest.util.token_handler import decode_header, verify_token, get_access_token
 import time
 
 # Get satellite config
@@ -40,8 +40,16 @@ def test_trusted_list_ok(client):
     # Trusted list token exists
     assert 'trusted_list_token' in response.json
 
-    # Decode token
-    trusted_list_token = decode_token(response.json['trusted_list_token'])
+    # Get header
+    token_header = decode_header(response.json['trusted_list_token'])
+
+    # Verify token with provided x5c header and get decoded payload
+    assert 'x5c' in token_header
+    trusted_list_token = {}
+    try:
+        trusted_list_token = verify_token(response.json['trusted_list_token'], token_header['x5c'][0], alg="RS256", aud=client_config['id'])
+    except Exception as ex:
+        pytest.fail('Error when verifying and decoding returned trusted_list token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # versions token parameters
     assert trusted_list_token['aud'] == client_config['id']

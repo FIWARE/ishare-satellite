@@ -56,6 +56,10 @@ Further ENVs control the execution of the satellite. Below is a list of the supp
 
 
 
+A documentation for creating an own Root CA, intermediates, server/client certificates and certificate chains using `openssl` can be found 
+at [doc/certs](./doc/certs). 
+
+
 ### Run
 
 After placing a configuration file at `config/satellite.yml`, the satellite can be started with 

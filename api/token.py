@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, current_app, abort, request
-from api.util.token_handler import validate_jwt, validate_client_id
+from api.util.token_handler import validate_jwt, validate_client_id, get_x5c_chain
 from api.util.config_handler import get_certificates, get_private_key
 import jwt
 import time, os
@@ -9,18 +9,6 @@ ACCESS_TOKEN_DURATION = int(os.environ.get('SATELLITE_ACCESS_TOKEN_DURATION', 36
 
 # Blueprint
 token_endpoint = Blueprint("token_endpoint", __name__, url_prefix="/token")
-
-# Retrieves x5c cert chain array from config
-def get_x5c_chain(cert):
-    sp = cert.split('-----BEGIN CERTIFICATE-----\n')
-    sp = sp[1:]
-    
-    ca_chain = []
-    for ca in sp:
-        ca_sp = ca.split('\n-----END CERTIFICATE-----')
-        ca_chain.append(ca_sp[0].replace('\n',''))
-        
-    return ca_chain
 
 # POST /token
 @token_endpoint.route("", methods = ['POST'])
@@ -40,6 +28,7 @@ def index():
         if len(request_token) < 1:
             current_app.logger.debug('Empty Authorization header')
             abort(400)
+        current_app.logger.debug('Received client_assertion: {}'.format(request_token))
         request_id = request.form.get('client_id')
         request_grant_type = request.form.get('grant_type')
         request_scope = request.form.get('scope')
