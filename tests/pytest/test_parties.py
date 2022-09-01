@@ -16,6 +16,9 @@ PARTIES_ENDPOINT = "/parties"
 
 @pytest.fixture
 def client():
+    app.logger.setLevel("DEBUG")
+    app.logger.info("Setting test logger...")
+
     with app.test_client() as client:
         yield client
 
@@ -353,9 +356,20 @@ def test_all_parties_noncertified_only_ok(client):
     for p in parties_token['parties_info']['data']:
         assert 'certifications' not in p
 
+test_request_data= [
+    ("EU.EORI.NLPACKETDEL", "CN=PacketDeliveryCo,O=Packet Delivery Co,serialNumber=EU.EORI.NLPACKETDEL,C=NL"),
+    ("EU.EORI.NLPACKETDEL", "CN=PacketDeliveryCo,O=Packet Delivery Co,E=client@fiware.org,serialNumber=EU.EORI.NLPACKETDEL,C=NL"),
+    ("EU.EORI.FIWARECLIENT", "E=client@fiware.org,serialNumber=EU.EORI.FIWARECLIENT,C=DE"),
+    ("EU.EORI.FIWARECLIENT", "emailAddress=client@fiware.org,serialNumber=EU.EORI.FIWARECLIENT,C=DE"),
+    ("EU.EORI.FIWARECLIENT", "CN=FIWARE-Client,O=FIWARE Client,emailAddress=client@fiware.org,serialNumber=EU.EORI.FIWARECLIENT,C=DE"),
+    ("EU.EORI.FIWARECLIENT", "CN=FIWARE-Client,O=FIWARE Client,E=client@fiware.org,serialNumber=EU.EORI.FIWARECLIENT,C=DE")
+]
+
+
 @pytest.mark.ok
 @pytest.mark.it('Request party by eori and subject')
-def test_party_by_subject_ok(client):
+@pytest.mark.parametrize("eori,subject", test_request_data)
+def test_party_by_subject_ok(client, eori, subject):
     # Get access token
     access_token = get_access_token(client=client, client_id=client_config['id'], satellite_id=satellite_config['id'], key=client_config['key'], crt=client_config['crt'])
 
@@ -366,8 +380,8 @@ def test_party_by_subject_ok(client):
 
     # Set params
     params = {
-        'eori': "EU.EORI.NLPACKETDEL",
-        'certificate_subject_name': "CN=PacketDeliveryCo,O=Packet Delivery Co,serialNumber=EU.EORI.NLPACKETDEL,C=NL"
+        'eori': eori,
+        'certificate_subject_name': subject
     }
     
     # Invoke request
@@ -393,7 +407,7 @@ def test_party_by_subject_ok(client):
     # Verify parties
     assert len(parties_token['parties_info']['data']) == 1
     assert parties_token['parties_info']['count'] == 1
-    assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLPACKETDEL"
+    assert parties_token['parties_info']['data'][0]['party_id'] == eori
     assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active"
 
 @pytest.mark.failure

@@ -1,6 +1,5 @@
-from api.util.token_handler import get_subject_components
 import os
-
+from api.util.token_handler import get_subject_components_full
 # Maximum of parties per page
 MAX_PER_PAGE = int(os.environ.get('SATELLITE_MAX_PARTIES_PER_PAGE', 10))
 
@@ -71,7 +70,7 @@ def check_certificate_subject_name(certificate_subject_name, request_eori, party
     
     # Get subject_name components from party certificate
     crt = party['crt']
-    crt_subject_components = get_subject_components(crt)
+    crt_subject_components : dict = get_subject_components_full(crt)
 
     # Split request subject_name components
     r_subject_components = []
@@ -82,25 +81,19 @@ def check_certificate_subject_name(certificate_subject_name, request_eori, party
 
     app.logger.debug("==> Requested: {}".format(r_subject_components))
     app.logger.debug("==> Certificate: {}".format(crt_subject_components))
-        
+      
+    # check serial number
+    if 'serialNumber' in crt_subject_components:
+        if request_eori != crt_subject_components['serialNumber']:
+            app.logger.debug("Wrong serialNumber in certificate subject name")
+            return False  
+
     # Iterate over requested subject name attributes
     for r in r_subject_components:
-        found = False
-        for c in crt_subject_components:
-            # If serialNumber, compare to EORI
-            if (c[0].strip() == 'serialNumber') and (request_eori != c[1].strip()):
-                app.logger.debug("Wrong serialNumber in certificate subject name")
+        if r[0].strip() in crt_subject_components:
+            if crt_subject_components[r[0].strip()] != r[1].strip():
+                app.logger.debug("Certificate subject name does not match")
                 return False
-
-            # Compare attributes
-            if r[0].strip() == c[0].strip() and r[1].strip() == c[1].strip():
-                found = True
-                break
-
-        # Attribute not found
-        if not found:
-            app.logger.debug("Certificate subject name does not match")
-            return False
 
     app.logger.debug("Subject certificate name matched")
     return True

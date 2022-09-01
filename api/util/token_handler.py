@@ -1,7 +1,8 @@
 import jwt
 from OpenSSL import crypto
 from OpenSSL.crypto import X509StoreContextError
-from cryptography.x509 import load_pem_x509_certificate
+import cryptography.x509.oid as oid
+from cryptography.x509 import load_pem_x509_certificate, NameAttribute
 import time, os
 
 # Encoding of certificate subject names
@@ -12,6 +13,28 @@ X5C_ENCODING = os.environ.get('SATELLITE_X5C_ENCODING', 'UTF-8')
 
 # Header name where to expect access_token
 AUTHORIZATION_HEADER = os.environ.get('SATELLITE_AUTHORIZATION_HEADER', 'Authorization')
+
+# Name attributes as defined by rfc 4514, we set the value to PH(place holder, two capital letters comply with all names), since its required but unused
+SUPPORTED_NAME_ATTRIBUTES = [
+    NameAttribute(oid = oid.NameOID.COMMON_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.LOCALITY_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.STATE_OR_PROVINCE_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.ORGANIZATION_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.ORGANIZATIONAL_UNIT_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.COUNTRY_NAME, value= "PH"),
+    NameAttribute(oid = oid.NameOID.STREET_ADDRESS, value= "PH"),
+    NameAttribute(oid = oid.NameOID.DOMAIN_COMPONENT, value= "PH"),
+    NameAttribute(oid = oid.NameOID.USER_ID, value= "PH"),
+    NameAttribute(oid = oid.NameOID.EMAIL_ADDRESS, value= "PH")
+]
+
+# Get the short name for the given attribute if there is one
+def get_short_name_if_available(name: str) -> str:
+    nameAttribute: NameAttribute
+    for nameAttribute in SUPPORTED_NAME_ATTRIBUTES: 
+        if nameAttribute.oid._name == name: 
+            return nameAttribute.rfc4514_attribute_name
+    return name
 
 # Verifies client_id EORI against parties list for known party
 def validate_client_id(client_id, config):
@@ -61,6 +84,22 @@ def get_x5c_chain(cert):
         ca_chain.append(ca_sp[0].replace('\n',''))
         
     return ca_chain
+
+# Get subject components with there short names and original names
+def get_subject_components_full(cert) -> dict: 
+    cr = load_certificate(cert)
+    subject = cr.get_subject()
+    b_subject_components = subject.get_components()
+
+    # Convert from bytes to string
+    subject_components = {}
+    for c in b_subject_components:
+        originalName : str= c[0].decode(SUBJECT_ENCODING)
+        shortName: str = get_short_name_if_available(originalName)   
+        subject_components[originalName] = c[1].decode(SUBJECT_ENCODING)
+        subject_components[shortName] = c[1].decode(SUBJECT_ENCODING)
+
+    return subject_components
 
 # Get subject components
 def get_subject_components(cert):
