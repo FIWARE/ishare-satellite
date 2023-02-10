@@ -3,6 +3,7 @@ from distutils.command.config import config
 import re
 from this import d
 from hashlib import sha256
+from webbrowser import get
 from flask import Blueprint, Response, current_app, abort, request
 from api.util.parties_handler import get_parties_info
 from api.util.token_handler import validate_jwt, get_authorization_header, get_subject_components, load_certificate, get_x5c_chain
@@ -46,6 +47,7 @@ def getIssuer(did: str):
                 result['attributes'].append(getAttribute({'start_date': c['start_date']}))
             if 'end_date' in c: 
                 result['attributes'].append(getAttribute({'end_date': c['end_date']}))
+            result['attributes'].append(getAttribute({'type': 'attribute', 'name': 'issuer'}))
             return result
     abort(Response("No such issuer found.", 404)) 
 

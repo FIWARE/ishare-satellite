@@ -61,4 +61,4 @@ def test_trusted_issuer(client):
     assert 'did' in response.json, "The did of the issuer should be returned."
     
     assert response.json['did'] == TEST_DID, "The requested issuer should have been returned"
-    assert len(response.json['attributes']) == 6, "All configured attributes should be returned"
+    assert len(response.json['attributes']) == 7, "All configured attributes should be returned"
