@@ -10,6 +10,8 @@ parameter `serialNumber` when creating the corresponding CSR.
 The created root CA should be configued in the satellite `trusted_list`.
 
 
+> :bulb: In case you are running on plain linux, its likely that the [default openssl.conf](openssl.cnf) does not work. Try out the [openssl.cnf-linux](./openssl.cnf-linux) instead.
+
 ## Create Root CA Certificate
 
 File `serial` should contain:

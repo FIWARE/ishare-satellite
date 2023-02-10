@@ -332,6 +332,7 @@ parties:
       gQ8q7jhH/vcx7jk7XF8qICTMSnT7VqT3ggnCDOn9KqlLVZmvWQ==
       -----END CERTIFICATE-----
   - id: "EU.EORI.FIWARECLIENT02"
+    did: "did:key:z6Mkv4Lh9zBTPLoFhLHHMFJA7YAeVw5HFYZV8rkdfY9fNtm3"
     name: "FIWARE Client"
     status: "Active"
     start_date: "2021-09-27T00:00:00Z"

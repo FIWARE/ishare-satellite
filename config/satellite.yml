@@ -40,6 +40,7 @@ trusted_list:
 # Configuration of parties
 parties:
   - id: "EU.EORI.NLPACKETDEL"
+    did: "did:key:z6Mkv4Lh9zBTPLoFhLHHMFJA7YAeVw5HFYZV8rkdfY9fNtm3"
     name: "Packet Delivery Company"
     status: "Active"
     start_date: "2021-09-27T00:00:00Z"
