@@ -35,16 +35,16 @@ def test_versions_ok(client):
     response = client.get(VERSIONS_ENDPOINT, headers=headers)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Versions token exists
-    assert 'versions_token' in response.json
+    assert 'versions_token' in response.json, "Response should contain versions_token"
 
     # Get header
     token_header = decode_header(response.json['versions_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in token_header
+    assert 'x5c' in token_header, "x5c parameter should be in the response token header"
     versions_token = {}
     try:
         versions_token = verify_token(response.json['versions_token'], token_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -52,17 +52,17 @@ def test_versions_ok(client):
         pytest.fail('Error when verifying and decoding returned versions token --> Exception {}: {}'.format(type(ex).__name__, ex))
 
     # versions token parameters
-    assert versions_token['aud'] == client_config['id']
-    assert versions_token['iss'] == satellite_config['id']
-    assert versions_token['sub'] == satellite_config['id']
+    assert versions_token['aud'] == client_config['id'], "Returned token aud parameter should be equal to client ID"
+    assert versions_token['iss'] == satellite_config['id'], "Returned token iss parameter should be equal to satellite ID"
+    assert versions_token['sub'] == satellite_config['id'], "Returned token sub parameter should be equal to satellite ID"
 
     # Valid expiration claim
     now = int(str(time.time()).split('.')[0])
-    assert versions_token['iat'] <= now
-    assert versions_token['exp'] > now
+    assert versions_token['iat'] <= now, "Returned token iad parameter should be smaller or equal than current timestamp"
+    assert versions_token['exp'] > now, "Returned token exp parameter should be larger than current timestamp"
     
     # Should contain 3 versions
-    assert len(versions_token['versions_info']) == 3
+    assert len(versions_token['versions_info']) == 3, "Response verions info should contain 3 entries"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request /versions, but access_token is expired')
@@ -88,7 +88,7 @@ def test_versions_expired_access_token(client):
     response = client.get(VERSIONS_ENDPOINT, headers=headers)
     
     # Status code
-    assert response.status_code == 401
+    assert response.status_code == 401, "Response should have status code 401"
     
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request /versions, but replaced client_id in access_token to invalid client')
@@ -115,7 +115,7 @@ def test_versions_replaced_client_id_access_token(client):
     response = client.get(VERSIONS_ENDPOINT, headers=headers)
     
     # Status code
-    assert response.status_code == 401
+    assert response.status_code == 401, "Response should have status code 401"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request /versions, but using self-issued access_token')
@@ -142,4 +142,4 @@ def test_versions_self_issued_access_token(client):
     response = client.get(VERSIONS_ENDPOINT, headers=headers)
     
     # Status code
-    assert response.status_code == 401
+    assert response.status_code == 401, "Response should have status code 401"

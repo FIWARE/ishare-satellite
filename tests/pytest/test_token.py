@@ -41,20 +41,20 @@ def test_token_ok(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Response attributes
-    assert response.json['scope'] == 'iSHARE'
-    assert response.json['token_type'] == 'Bearer'
+    assert response.json['scope'] == 'iSHARE', "Parameter scope of response should be equal to iSHARE"
+    assert response.json['token_type'] == 'Bearer', "Parameter token_type of response should be equal to Bearer"
     
     # Access token exists
-    assert 'access_token' in response.json
+    assert 'access_token' in response.json, "Response should contain access_token"
 
     # Get header
     token_header = decode_header(response.json['access_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in token_header
+    assert 'x5c' in token_header, "x5c parameter should be in the response token header"
     access_token = {}
     try:
         access_token = verify_token(response.json['access_token'], token_header['x5c'][0], alg="RS256", aud=satellite_config['id'])
@@ -62,15 +62,15 @@ def test_token_ok(client):
         pytest.fail('Error when verifying and decoding returned access token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Access token parameters
-    assert access_token['client_id'] == client_config['id']
-    assert access_token['iss'] == satellite_config['id']
-    assert access_token['aud'] == satellite_config['id']
-    assert access_token['scope'] == ["iSHARE"]
+    assert access_token['client_id'] == client_config['id'], "Returned token client_id parameter should be equal to client ID"
+    assert access_token['iss'] == satellite_config['id'], "Returned token iss parameter should be equal to satellite ID"
+    assert access_token['aud'] == satellite_config['id'], "Returned token aud parameter should be equal to satellite ID"
+    assert access_token['scope'] == ["iSHARE"], "Returned token scope parameter should be equal to iSHARE"
 
     # Valid expiration claim
     now = int(str(time.time()).split('.')[0])
-    assert access_token['nbf'] <= now
-    assert access_token['exp'] > now
+    assert access_token['nbf'] <= now, "Returned token iad parameter should be smaller or equal than current timestamp"
+    assert access_token['exp'] > now, "Returned token exp parameter should be larger than current timestamp"
     
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request access token with invalid client')
@@ -88,7 +88,7 @@ def test_token_invalid_client(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 400
+    assert response.status_code == 400, "Response should have status code 400"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request access token with client_id not matching signed request JWT issuer')
@@ -105,7 +105,7 @@ def test_token_client_id_unequals_iss(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 400
+    assert response.status_code == 400, "Response should have status code 400"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request access token with invalid client and certificate from invalid root CA')
@@ -123,7 +123,7 @@ def test_token_invalid_root_ca(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 400
+    assert response.status_code == 400, "Response should have status code 400"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request access token with valid client but cert chain replaced with invalid intermediate+root CA')
@@ -146,7 +146,7 @@ def test_token_valid_client_invalid_cert_chain(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 400
+    assert response.status_code == 400, "Response should have status code 400"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request access token with valid client but cert chain replaced with invalid intermediate')
@@ -169,4 +169,4 @@ def test_token_valid_client_invalid_intermediate(client):
     response = client.post(TOKEN_ENDPOINT, data=t_auth_params)
     
     # Status code
-    assert response.status_code == 400
+    assert response.status_code == 400, "Response should have status code 400"

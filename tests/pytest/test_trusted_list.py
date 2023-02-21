@@ -35,16 +35,16 @@ def test_trusted_list_ok(client):
     response = client.get(TRUSTED_LIST_ENDPOINT, headers=headers)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Trusted list token exists
-    assert 'trusted_list_token' in response.json
+    assert 'trusted_list_token' in response.json, "Response should contain trusted_list_token"
 
     # Get header
     token_header = decode_header(response.json['trusted_list_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in token_header
+    assert 'x5c' in token_header, "x5c parameter should be in the response token header"
     trusted_list_token = {}
     try:
         trusted_list_token = verify_token(response.json['trusted_list_token'], token_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -52,17 +52,17 @@ def test_trusted_list_ok(client):
         pytest.fail('Error when verifying and decoding returned trusted_list token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # versions token parameters
-    assert trusted_list_token['aud'] == client_config['id']
-    assert trusted_list_token['iss'] == satellite_config['id']
-    assert trusted_list_token['sub'] == satellite_config['id']
+    assert trusted_list_token['aud'] == client_config['id'], "Returned token aud parameter should be equal to client ID"
+    assert trusted_list_token['iss'] == satellite_config['id'], "Returned token iss parameter should be equal to satellite ID"
+    assert trusted_list_token['sub'] == satellite_config['id'], "Returned token sub parameter should be equal to satellite ID"
 
     # Valid expiration claim
     now = int(str(time.time()).split('.')[0])
-    assert trusted_list_token['iat'] <= now
-    assert trusted_list_token['exp'] > now
+    assert trusted_list_token['iat'] <= now, "Returned token iad parameter should be smaller or equal than current timestamp"
+    assert trusted_list_token['exp'] > now, "Returned token exp parameter should be larger than current timestamp"
 
     # Verify trusted list
-    assert len(trusted_list_token['trusted_list']) == 2
-    assert trusted_list_token['trusted_list'][0]['certificate_fingerprint'] == "A78FDF7BA13BBD95C6236972DD003FAE07F4E447B791B6EF6737AD22F0B61862"
-    assert trusted_list_token['trusted_list'][1]['certificate_fingerprint'] == "8ECB9BD8E0FE12D7368ACDE12905E823812C34A71F97439D9E42383477C94E2B"
+    assert len(trusted_list_token['trusted_list']) == 2, "Trusted list should contain 2 entries"
+    assert trusted_list_token['trusted_list'][0]['certificate_fingerprint'] == "A78FDF7BA13BBD95C6236972DD003FAE07F4E447B791B6EF6737AD22F0B61862", "1st fingerprint should be correctly calculated"
+    assert trusted_list_token['trusted_list'][1]['certificate_fingerprint'] == "8ECB9BD8E0FE12D7368ACDE12905E823812C34A71F97439D9E42383477C94E2B", "2nd fingerprint should be correctly calculated"
 

@@ -42,16 +42,16 @@ def test_all_parties_eori_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -59,18 +59,18 @@ def test_all_parties_eori_ok(client):
         pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # versions token parameters
-    assert parties_token['aud'] == client_config['id']
-    assert parties_token['iss'] == satellite_config['id']
-    assert parties_token['sub'] == satellite_config['id']
+    assert parties_token['aud'] == client_config['id'], "Returned token aud parameter should be equal to client ID"
+    assert parties_token['iss'] == satellite_config['id'], "Returned token iss parameter should be equal to satellite ID"
+    assert parties_token['sub'] == satellite_config['id'], "Returned token sub parameter should be equal to satellite ID"
 
     # Valid expiration claim
     now = int(str(time.time()).split('.')[0])
-    assert parties_token['iat'] <= now
-    assert parties_token['exp'] > now
+    assert parties_token['iat'] <= now, "Returned token iad parameter should be smaller or equal than current timestamp"
+    assert parties_token['exp'] > now, "Returned token exp parameter should be larger than current timestamp"
 
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 10
-    assert parties_token['parties_info']['count'] == 14
+    assert len(parties_token['parties_info']['data']) == 10, "Parties list should contain only 10 entries due to pagination"
+    assert parties_token['parties_info']['count'] == 14, "Parties info should report 14 entries"
 
 @pytest.mark.ok
 @pytest.mark.it('Request all parties by name')
@@ -92,16 +92,16 @@ def test_all_parties_name_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -109,8 +109,8 @@ def test_all_parties_name_ok(client):
         pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 10
-    assert parties_token['parties_info']['count'] == 14
+    assert len(parties_token['parties_info']['data']) == 10, "Parties list should contain only 10 entries due to pagination"
+    assert parties_token['parties_info']['count'] == 14, "Parties info should report 14 entries"
 
 @pytest.mark.ok
 @pytest.mark.it('Request party by eori')
@@ -132,16 +132,16 @@ def test_party_by_eori_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -149,10 +149,10 @@ def test_party_by_eori_ok(client):
         pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 1
-    assert parties_token['parties_info']['count'] == 1
-    assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLPACKETDEL"
-    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active"
+    assert len(parties_token['parties_info']['data']) == 1, "Parties list should contain 1 entry"
+    assert parties_token['parties_info']['count'] == 1, "Parties info should report 1 entry"
+    assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLPACKETDEL", "ID of first entry should be equal to EU.EORI.NLPACKETDEL"
+    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active", "Status of first entry should be equal to Active"
 
 @pytest.mark.ok
 @pytest.mark.it('Request party by name')
@@ -174,16 +174,16 @@ def test_party_by_name_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -191,10 +191,10 @@ def test_party_by_name_ok(client):
         pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 1
-    assert parties_token['parties_info']['count'] == 1
-    assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLNOCHEAPER"
-    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active"
+    assert len(parties_token['parties_info']['data']) == 1, "Parties list should contain 1 entry"
+    assert parties_token['parties_info']['count'] == 1, "Parties info should report 1 entry"
+    assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLNOCHEAPER", "ID of first entry should be equal to EU.EORI.NLNOCHEAPER"
+    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active", "Status of first entry should be equal to Active"
 
 @pytest.mark.ok
 @pytest.mark.it('Request active parties only')
@@ -216,16 +216,16 @@ def test_all_parties_active_only_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -234,7 +234,7 @@ def test_all_parties_active_only_ok(client):
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
-        assert p['adherence']['status'] == "Active"
+        assert p['adherence']['status'] == "Active", "Status of parties entry {} should be equal to Active".format(p['party_id'])
 
 @pytest.mark.ok
 @pytest.mark.it('Request non-active parties only')
@@ -256,16 +256,16 @@ def test_all_parties_nonactive_only_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -274,7 +274,7 @@ def test_all_parties_nonactive_only_ok(client):
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
-        assert p['adherence']['status'] != "Active"
+        assert p['adherence']['status'] != "Active", "Status of parties entry {} should be unequal to Active".format(p['party_id'])
 
 @pytest.mark.ok
 @pytest.mark.it('Request certified parties only')
@@ -296,16 +296,16 @@ def test_all_parties_certified_only_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -314,7 +314,7 @@ def test_all_parties_certified_only_ok(client):
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
-        assert 'certifications' in p
+        assert 'certifications' in p, "Parties entry {} should contain parameter certifications".format(p['party_id'])
 
 @pytest.mark.ok
 @pytest.mark.it('Request non-certified parties only')
@@ -336,16 +336,16 @@ def test_all_parties_noncertified_only_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -354,7 +354,7 @@ def test_all_parties_noncertified_only_ok(client):
     
     # Verify parties
     for p in parties_token['parties_info']['data']:
-        assert 'certifications' not in p
+        assert 'certifications' not in p, "Parties entry {} should not contain parameter certifications".format(p['party_id'])
 
 test_request_data= [
     ("EU.EORI.NLPACKETDEL", "CN=PacketDeliveryCo,O=Packet Delivery Co,serialNumber=EU.EORI.NLPACKETDEL,C=NL"),
@@ -388,16 +388,16 @@ def test_party_by_subject_ok(client, eori, subject):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Get header
     parties_header = decode_header(response.json['parties_token'])
 
     # Verify token with provided x5c header and get decoded payload
-    assert 'x5c' in parties_header
+    assert 'x5c' in parties_header, "x5c parameter should be in the response token header"
     parties_token = {}
     try:
         parties_token = verify_token(response.json['parties_token'], parties_header['x5c'][0], alg="RS256", aud=client_config['id'])
@@ -405,10 +405,10 @@ def test_party_by_subject_ok(client, eori, subject):
         pytest.fail('Error when verifying and decoding returned parties token --> Exception {}: {}'.format(type(ex).__name__, ex))
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 1
-    assert parties_token['parties_info']['count'] == 1
-    assert parties_token['parties_info']['data'][0]['party_id'] == eori
-    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active"
+    assert len(parties_token['parties_info']['data']) == 1, "Parties list should contain 1 entry"
+    assert parties_token['parties_info']['count'] == 1, "Parties info should report 1 entry"
+    assert parties_token['parties_info']['data'][0]['party_id'] == eori, "Party ID of first entry should equal requested EORI of query"
+    assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active", "Status of first entry should be equal to Active"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request party by eori and subject, but invalid subject name')
@@ -431,17 +431,17 @@ def test_party_by_subject_invalid(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Decode token
     parties_token = decode_token(response.json['parties_token'])
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 0
-    assert parties_token['parties_info']['count'] == 0
+    assert len(parties_token['parties_info']['data']) == 0, "Parties list should be empty"
+    assert parties_token['parties_info']['count'] == 0, "Parties info should report 0 entries"
 
 @pytest.mark.failure
 @pytest.mark.it('Failure: Request party by eori and subject, but invalid serialNumber in subject name')
@@ -464,17 +464,17 @@ def test_party_by_subject_invalid_serial_number(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Decode token
     parties_token = decode_token(response.json['parties_token'])
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 0
-    assert parties_token['parties_info']['count'] == 0
+    assert len(parties_token['parties_info']['data']) == 0, "Parties list should be empty"
+    assert parties_token['parties_info']['count'] == 0, "Parties info should report 0 entries"
 
 @pytest.mark.ok
 @pytest.mark.it('Request all parties by EORI, page 1 with 10 parties')
@@ -497,17 +497,17 @@ def test_all_parties_eori_page1_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Decode token
     parties_token = decode_token(response.json['parties_token'])
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 10
-    assert parties_token['parties_info']['count'] == 14
+    assert len(parties_token['parties_info']['data']) == 10, "Parties list should contain 10 entries"
+    assert parties_token['parties_info']['count'] == 14, "Parties info should report 14 entries"
 
 @pytest.mark.ok
 @pytest.mark.it('Request all parties by EORI, page 2 only 4 parties')
@@ -530,17 +530,17 @@ def test_all_parties_eori_page2_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Decode token
     parties_token = decode_token(response.json['parties_token'])
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 4
-    assert parties_token['parties_info']['count'] == 14
+    assert len(parties_token['parties_info']['data']) == 4, "Parties list should contain 4 entries"
+    assert parties_token['parties_info']['count'] == 14, "Parties info should report 14 entries"
 
 @pytest.mark.ok
 @pytest.mark.it('Request all parties by EORI, page 3 empty')
@@ -563,14 +563,14 @@ def test_all_parties_eori_page3_empty_ok(client):
     response = client.get(PARTIES_ENDPOINT, headers=headers, query_string=params)
     
     # Status code
-    assert response.status_code == 200
+    assert response.status_code == 200, "Response should have status code 200"
 
     # Parties token exists
-    assert 'parties_token' in response.json
+    assert 'parties_token' in response.json, "Response should contain parties_token"
 
     # Decode token
     parties_token = decode_token(response.json['parties_token'])
     
     # Verify parties
-    assert len(parties_token['parties_info']['data']) == 0
-    assert parties_token['parties_info']['count'] == 14
+    assert len(parties_token['parties_info']['data']) == 0, "Parties list should be empty"
+    assert parties_token['parties_info']['count'] == 14, "Parties info should report 14 entries"
