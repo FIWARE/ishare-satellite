@@ -92,8 +92,8 @@ def index():
     p_token = ""
     try:
         p_token = jwt.encode(result, get_private_key(satellite), algorithm="RS256", headers=header)
-    except Exception as ex:
-        current_app.logger.debug('Could not encode JWT for parties_token: {}'.format(ex))
+    except Exception as dec_ex:
+        current_app.logger.debug('Could not encode JWT for parties_token: {}'.format(dec_ex))
         abort(500)
 
     current_app.logger.debug("==> {}".format(p_token))
