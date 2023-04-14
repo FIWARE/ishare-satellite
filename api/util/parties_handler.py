@@ -1,5 +1,6 @@
 import os
-from api.util.token_handler import get_subject_components_full
+from api.util.token_handler import get_subject_components_full, get_certificates_info
+
 # Maximum of parties per page
 MAX_PER_PAGE = int(os.environ.get('SATELLITE_MAX_PARTIES_PER_PAGE', 10))
 
@@ -171,10 +172,10 @@ def get_parties_info(request, config, app):
 
         # Append data
         app.logger.debug("Participant '{}' passed, adding to result list".format(p['id']))
-        parties_info['count'] += 1
         party = {
             'party_id': p['id'],
             'party_name': p['name'],
+            'registrar_id': config['id'],
             "adherence": {
                 "end_date": p['end_date'],
                 "start_date": p['start_date'],
@@ -185,6 +186,22 @@ def get_parties_info(request, config, app):
             party['certifications'] = p['certifications']
         if 'capability_url' in p:
             party['capability_url'] = p['capability_url']
+        else:
+            party['capability_url'] = ""
+        if 'crt' in p:
+            party['certificates'] = get_certificates_info(p['crt'], app)
+        if 'additional_info' in p:
+            party['additional_info'] = p['additional_info']
+        if 'agreements' in p:
+            party['agreements'] = p['agreements']
+        if 'roles' in p:
+            party['roles'] = p['roles']
+        if 'authregistery' in p:
+            party['authregistery'] = p['authregistery']
+        else:
+            party['authregistery'] = []
+
+        parties_info['count'] += 1
         parties_info['data'].append(party)
         
     # Return data

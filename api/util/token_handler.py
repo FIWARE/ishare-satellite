@@ -1,9 +1,13 @@
 import jwt
+import collections.abc
 from OpenSSL import crypto
 from OpenSSL.crypto import X509StoreContextError
 import cryptography.x509.oid as oid
 from cryptography.x509 import load_pem_x509_certificate, NameAttribute
-import time, os
+import time, os, datetime
+
+# Encoding of the certificate fingerprint
+FINGERPRINT_ENCODING = os.environ.get('SATELLITE_FINGERPRINT_ENCODING', 'UTF-8')
 
 # Encoding of certificate subject names
 SUBJECT_ENCODING = os.environ.get('SATELLITE_SUBJECT_ENCODING', 'UTF-8')
@@ -101,6 +105,21 @@ def get_subject_components_full(cert) -> dict:
 
     return subject_components
 
+# Get subject components with their original names only
+def get_subject_components_org(cert) -> dict: 
+    cr = load_certificate(cert)
+    subject = cr.get_subject()
+    b_subject_components = subject.get_components()
+
+    # Convert from bytes to string
+    subject_components = {}
+    for c in b_subject_components:
+        originalName : str= c[0].decode(SUBJECT_ENCODING)
+        shortName: str = get_short_name_if_available(originalName)
+        subject_components[originalName] = c[1].decode(SUBJECT_ENCODING)
+
+    return subject_components
+
 # Get subject components
 def get_subject_components(cert):
     cr = load_certificate(cert)
@@ -113,6 +132,50 @@ def get_subject_components(cert):
         subject_components.append((c[0].decode(SUBJECT_ENCODING), c[1].decode(SUBJECT_ENCODING)))
 
     return subject_components
+
+# Get certificate information
+def get_certificates_info(party_crt, app):
+    # Array, but will store only single certificate here now
+    certificates = []
+
+    # Get x5c PEM string
+    x5c = ""
+    x5c_array = get_x5c_chain(party_crt)
+    if len(x5c_array) != 1:
+        app.logger.debug("Error when creating x5c PEM string")
+        x5c = "CERTIFICATE_ERROR"
+    else:
+        x5c = x5c_array[0]
+
+    # Get x5c sha256 Fingerprint
+    cert = load_certificate(party_crt)
+    fingerprint = cert.digest('sha256').decode(FINGERPRINT_ENCODING).replace(':','')
+
+    # Get notBefore
+    notBefore = cert.get_notBefore()
+    notBefore_ts = notBefore.decode(SUBJECT_ENCODING)
+    notBefore_ts = datetime.datetime.strptime(notBefore_ts, '%Y%m%d%H%M%S%fZ').isoformat(sep='T', timespec='milliseconds')+'Z'
+
+    # Get subject name
+    subject_name = ""
+    crt_subject_components : dict = get_subject_components_org(party_crt)
+    for s, sv in crt_subject_components.items():
+        subject_name = subject_name + "{}={},".format(s,sv)
+    subject_name = subject_name.rstrip(',')
+        
+    # Build response
+    crt = {
+        'subject_name': subject_name, # Comma-separated string
+        'certificate_type': "PKIo",
+        'enabled_from': notBefore_ts, # issue date of certificate "2023-01-31T00:00:00.000Z"
+        'x5c': x5c, # PEM string
+        'x5t#S256': fingerprint # sha256 Fingerprint "579c3169e01cc4b62723fed093079ad98b530225090afd02b32343a07822c9e5"
+    }
+
+    certificates.append(crt)
+    return certificates
+
+
 
 # Validate iSHARE JWT
 def validate_jwt(token, config, app, required_issuer=None):
@@ -156,6 +219,13 @@ def validate_jwt(token, config, app, required_issuer=None):
             if decoded_payload['iss'] != required_issuer:
                 app.logger.debug("Invalid iss parameter")
                 return False
+
+        # Check aud parameter --> iSHARE does not allow an array
+        if isinstance(decoded_payload['aud'], collections.abc.Sequence) and not isinstance(decoded_payload['aud'], (str, collections.abc.ByteString)):
+            app.logger.debug("Invalid aud parameter: must not be an array")
+        if decoded_payload['aud'] != config['id']:
+            app.logger.debug("Invalid aud parameter: {}".format(decoded_payload['aud']))
+        
 
         # Check for x5c header
         if 'x5c' not in decoded_header:

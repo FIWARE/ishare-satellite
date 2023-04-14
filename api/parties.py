@@ -28,7 +28,7 @@ def index():
     # Get Authorization header
     request_token = get_authorization_header(request)
     if not request_token:
-        current_app.logger.debug('Could not retrieve Authorization header: {}'.format(ex))
+        current_app.logger.debug('Could not retrieve Authorization header')
         abort(401, description='Could not retrieve Authorization header')
 
     # Validate and verify JWT

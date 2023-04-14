@@ -16,8 +16,8 @@ PARTIES_ENDPOINT = "/parties"
 
 @pytest.fixture
 def client():
-    app.logger.setLevel("DEBUG")
-    app.logger.info("Setting test logger...")
+    #app.logger.setLevel("DEBUG")
+    #app.logger.info("Setting test logger...")
 
     with app.test_client() as client:
         yield client
@@ -153,7 +153,25 @@ def test_party_by_eori_ok(client):
     assert parties_token['parties_info']['count'] == 1, "Parties info should report 1 entry"
     assert parties_token['parties_info']['data'][0]['party_id'] == "EU.EORI.NLPACKETDEL", "ID of first entry should be equal to EU.EORI.NLPACKETDEL"
     assert parties_token['parties_info']['data'][0]['adherence']['status'] == "Active", "Status of first entry should be equal to Active"
-
+    p = parties_token['parties_info']['data'][0]
+    assert p['registrar_id'] == satellite_config['id'], "registrar_id should be equal to satellite ID"
+    assert 'additional_info' in p, "should contain additional_info"
+    assert p['additional_info']['website'] == "https://www.packetdelivery.com", "additional_info should contain website"
+    assert 'agreements' in p, "should contain agreements"
+    assert len(p['agreements']) == 2, "agreements should contain 2 entries"
+    assert p['agreements'][0]['type'] == "TermsOfUse", "First agreement should have correct type"
+    assert p['agreements'][1]['framework'] == "iSHARE", "Second agreement should have correct framework"
+    assert 'certificates' in p, "should contain certificates"
+    assert len(p['certificates']) == 1, "certificates list should contain only 1 entry"
+    assert p['certificates'][0]['x5t#S256'] == "AB082F48B3CDA0D3502553E978311CAF5122DC8EB3924D85223A5D145771188F", "certificate should have correct fingerprint"
+    assert p['certificates'][0]['enabled_from'] == "2021-02-18T11:24:03.000Z", "certificate should have correct issue date"
+    assert 'roles' in p, "should contain roles"
+    assert len(p['roles']) == 1, "should contain 1 role"
+    assert p['roles'][0]['role'] == "ServiceProvider", "should have ServiceProvider role"
+    assert 'authregistery' in p, "should contain authregistery"
+    assert len(p['authregistery']) == 1, "authregistery should have 1 entry"
+    assert p['authregistery'][0]['authorizationRegistryID'] == "EU.EORI.NLPACKETDEL", "authregistery should have correct authorizationRegistryID"
+    
 @pytest.mark.ok
 @pytest.mark.it('Request party by name')
 def test_party_by_name_ok(client):
