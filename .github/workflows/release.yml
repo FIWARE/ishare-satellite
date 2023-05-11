@@ -7,7 +7,7 @@ on:
 
 env:
   IMAGE_NAME: fiware/ishare-satellite
-
+  IMAGE_NAME_QUAY: quay.io/fiware/ishare-satellite
 
 jobs:
 
@@ -101,5 +101,10 @@ jobs:
           docker build --tag ${{ env.IMAGE_NAME }}:${{ needs.generate-version.outputs.version }} .
   
           docker push ${{ env.IMAGE_NAME }}:${{ needs.generate-version.outputs.version }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ needs.generate-version.outputs.version }} ${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.IMAGE_NAME }}:latest
+
+      - name: Push to quay.io
+        run: |
+          echo "${{ secrets.QUAY_TOKEN }}" | docker login quay.io -u "${{ secrets.QUAY_USERNAME }}" --password-stdin
+          docker tag ${{ env.IMAGE_NAME }}:${{ needs.generate-version.outputs.version }} ${{ env.IMAGE_NAME_QUAY }}:${{ needs.generate-version.outputs.version }}
+          docker push ${{ env.IMAGE_NAME_QUAY }}:${{ needs.generate-version.outputs.version }}
+
